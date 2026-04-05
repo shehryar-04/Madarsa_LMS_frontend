@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react'
 import { AuthContext } from './AuthContext'
 import StudentDashboard from '../Components/StudentDashboard'
-import './auth.css'
+import './Auth.css'
 
 export default function AuthForm() {
   const { login, signup, logout, user } = useContext(AuthContext)
