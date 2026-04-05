@@ -75,7 +75,7 @@ function StudentDetails({ student }) {
   )
 }
 
-export default function StudentModal({ student, isAdmin, editForm, onClose, onEdit, onEditChange, onEditFileChange, onUpdate }) {
+export default function StudentModal({ student, isAdmin, editForm, onClose, onEdit, onEditChange, onEditFileChange, onUpdate, rooms = [] }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -112,6 +112,7 @@ export default function StudentModal({ student, isAdmin, editForm, onClose, onEd
                 formState={editForm}
                 onChange={onEditChange}
                 onFileChange={onEditFileChange}
+                rooms={rooms}
               />
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px' }}>
                 <button type="button" className="sidebar-btn" onClick={() => onEdit(null)}>Cancel</button>

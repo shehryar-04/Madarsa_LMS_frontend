@@ -11,10 +11,12 @@ import AllStudentsSection from './students/AllStudentsSection'
 import StudentModal from './students/StudentModal'
 import SanadDashboard from './sanad/SanadDashboard'
 import ReportModal from './pdf/ReportModal'
+import RoomsDashboard from './rooms/RoomsDashboard'
 
 import { useStudentData } from '../hooks/useStudentData'
 import { useStudentForm, useStudentEdit } from '../hooks/useStudentForm'
 import { usePdfReport } from '../hooks/usePdfReport'
+import { useRooms } from '../hooks/useRooms'
 
 import './Dashboard.css'
 
@@ -88,6 +90,10 @@ export default function StudentDashboard({ user, onLogout }) {
     pdfLoading, showReportModal, setShowReportModal,
     selectedFields, setSelectedFields, generatePDF,
   } = usePdfReport({ buildFilteredQuery, filters })
+
+  // ── Rooms (for room dropdown in student form) ──
+  const { rooms, fetchRooms } = useRooms()
+  useEffect(() => { fetchRooms() }, [fetchRooms])
 
   // ── Merge errors/successes from sub-hooks ──
   useEffect(() => {
@@ -212,6 +218,7 @@ export default function StudentDashboard({ user, onLogout }) {
           )}
 
           {activeSection === 'sanadRecords' && <SanadDashboard user={user} />}
+          {activeSection === 'rooms' && <RoomsDashboard user={user} />}
         </main>
       </div>
 
@@ -221,6 +228,7 @@ export default function StudentDashboard({ user, onLogout }) {
           student={selectedStudent}
           isAdmin={isAdmin}
           editForm={editForm}
+          rooms={rooms}
           onClose={() => { setSelectedStudent(null); setEditForm(null) }}
           onEdit={() => setEditForm({ ...selectedStudent })}
           onEditChange={handleEditChange}

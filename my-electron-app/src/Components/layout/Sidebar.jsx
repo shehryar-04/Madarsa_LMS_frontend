@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { id: 'allStudents', label: 'All Students', icon: '👥' },
   { id: 'addStudent', label: 'Add Student', icon: '➕' },
   { id: 'sanadRecords', label: 'Sanad Records', icon: '📜' },
+  { id: 'rooms', label: 'Rooms', icon: '🚪' },
 ]
 
 export default function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse }) {

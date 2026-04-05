@@ -1,7 +1,7 @@
 import React from 'react'
 import { STUDENT_TYPES, CLASS_OPTIONS, GUARDIAN_RELATIONS } from '../../constants/student'
 
-export default function StudentFormFields({ formState, onChange, onFileChange }) {
+export default function StudentFormFields({ formState, onChange, onFileChange, rooms = [] }) {
   return (
     <>
       {/* ── Basic Information ── */}
@@ -127,7 +127,23 @@ export default function StudentFormFields({ formState, onChange, onFileChange })
           {formState.residential_status === 'مقیم' && (
             <label className="form-label">
               <span>Room Number (کمرہ نمبر)</span>
-              <input name="room_number" value={formState.room_number || ''} onChange={onChange} placeholder="e.g. A-12" dir="auto" />
+              {rooms.length > 0 ? (
+                <select name="room_number" value={formState.room_number || ''} onChange={onChange}>
+                  <option value="">— Select Room —</option>
+                  {rooms.map(r => (
+                    <option
+                      key={r.id}
+                      value={r.room_number}
+                      disabled={r.current_occupancy >= r.capacity}
+                    >
+                      Room {r.room_number} — {r.current_occupancy}/{r.capacity} occupied
+                      {r.current_occupancy >= r.capacity ? ' (Full)' : ''}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input name="room_number" value={formState.room_number || ''} onChange={onChange} placeholder="e.g. A-12" dir="auto" />
+              )}
             </label>
           )}
           <label className="form-label">
