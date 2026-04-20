@@ -1,9 +1,11 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { supabase } from '../Auth/SupabaseClient'
 import { PAGE_SIZE } from '../constants/student'
 
+const isElectron = () => typeof window !== 'undefined' && Boolean(window.localDb)
+
 /** Fetch ALL rows of a single column, paginating past Supabase's 1000-row limit */
-async function fetchAllColumn(column) {
+async function fetchAllColumn(column, extraFilters = {}) {
   const batchSize = 1000
   let all = []
   let page = 0
@@ -11,11 +13,12 @@ async function fetchAllColumn(column) {
 
   while (hasMore) {
     const from = page * batchSize
-    const { data, error } = await supabase
-      .from('students')
-      .select(column)
-      .range(from, from + batchSize - 1)
-
+    let query = supabase.from('students').select(column).range(from, from + batchSize - 1)
+    // Apply any extra equality filters (e.g. { status: 'active' })
+    for (const [key, val] of Object.entries(extraFilters)) {
+      query = query.eq(key, val)
+    }
+    const { data, error } = await query
     if (error || !data) break
     all = all.concat(data)
     hasMore = data.length === batchSize
@@ -50,10 +53,12 @@ export function useStudentData() {
   const fetchDashboardStats = useCallback(async () => {
     setStatsLoading(true)
 
+    // Count ALL students (active + inactive) for dashboard totals
     const { count: total } = await supabase
       .from('students')
       .select('*', { count: 'exact', head: true })
 
+    // Class breakdown — all students
     const classData = await fetchAllColumn('class_level')
     const byClass = classData.reduce((acc, item) => {
       const key = item.class_level || 'Unknown'
@@ -61,11 +66,13 @@ export function useStudentData() {
       return acc
     }, {})
 
+    // District count — all students
     const districtData = await fetchAllColumn('district')
     const districts = new Set(districtData.map(d => (d.district || '').trim()).filter(Boolean)).size
 
     setStats({ total: total || 0, byClass, districts })
 
+    // Recent students — all statuses
     const { data: recent } = await supabase
       .from('students')
       .select('*')
@@ -90,16 +97,22 @@ export function useStudentData() {
 
   /** Build a filtered Supabase query */
   const buildFilteredQuery = useCallback((selectStr, opts = {}, filters = {}) => {
-    const { appliedSearch, filterType, filterDistrict, filterYear } = filters
+    const { appliedSearch, filterType, filterDistrict, filterYear, filterClass, filterRoom, showInactive } = filters
     let query = supabase.from('students').select(selectStr, opts)
 
+    if (!showInactive) query = query.eq('status', 'active')
+
     if (appliedSearch?.trim()) {
-      const term = `%${appliedSearch.trim()}%`
-      query = query.or(`name.ilike.${term},father_name.ilike.${term},cnic.ilike.${term},district.ilike.${term}`)
+      const term = appliedSearch.trim()
+      const likeTerm = `%${term}%`
+      const orClause = `name.ilike.${likeTerm},father_name.ilike.${likeTerm},district.ilike.${likeTerm},serial_no.ilike.${likeTerm}`
+      query = query.or(orClause)
     }
-    if (filterType) query = query.eq('student_type', filterType)
+    if (filterType)     query = query.eq('student_type', filterType)
     if (filterDistrict) query = query.ilike('district', filterDistrict)
-    if (filterYear) query = query.ilike('entry_year', `${filterYear}%`)
+    if (filterYear)     query = query.ilike('entry_year', `${filterYear}%`)
+    if (filterClass)    query = query.eq('class_level', filterClass)
+    if (filterRoom)     query = query.eq('room_number', filterRoom)
 
     return query
   }, [])
@@ -108,6 +121,29 @@ export function useStudentData() {
     setListLoading(true)
     setError('')
 
+    // ── Offline fallback: read from local JSON backup ──
+    if (!navigator.onLine && isElectron()) {
+      try {
+        const { appliedSearch, filterType, filterDistrict, filterYear, filterClass, filterRoom, showInactive } = filters
+        let rows = appliedSearch?.trim()
+          ? await window.localDb.searchStudents(appliedSearch.trim())
+          : await window.localDb.filterStudents({ filterType, filterDistrict, filterYear, filterRoom })
+
+        if (!showInactive) rows = rows.filter(r => r.status !== 'inactive')
+        if (filterClass) rows = rows.filter(r => r.class_level === filterClass)
+
+        const total = rows.length
+        const from = (page - 1) * PAGE_SIZE
+        setStudents(rows.slice(from, from + PAGE_SIZE))
+        setTotalStudents(total)
+      } catch (err) {
+        setError('Offline: could not read local backup — ' + err.message)
+      }
+      setListLoading(false)
+      return
+    }
+
+    // ── Online: fetch from Supabase ──
     const from = (page - 1) * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
 

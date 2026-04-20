@@ -3,8 +3,8 @@ export const STUDENT_TYPES = ['kutub', 'naazrah', 'hifz', 'fuzala', 'sanad']
 export const PAGE_SIZE = 50
 
 export const CLASS_OPTIONS = [
-  'عالمہ ثانیہ',
-  'عالمہ اولیٰ',
+  'عالمیہ ثانیہ',
+  'عالمیہ اولیٰ',
   'عالیہ ثانیہ',
   'عالیہ اولیٰ',
   'خاصہ ثانیہ',
@@ -19,13 +19,15 @@ export const CLASS_OPTIONS = [
   'عامہ اولیٰ کمپیوٹر سائنس',
   'عامہ اولیٰ بائیو سائنس',
   'عامہ اولیٰ آرٹس',
-  'اعدادیہ برائے خاصہ اولیٰ',
-  'متوسطہ ثانیہ (8th)',
+  'اعدادیہ برائے عامہ اولیٰ',
+  'متوسطہ ثالثہ (8th)',
   'متوسطہ ثانیہ (7th)',
   'متوسطہ اولیٰ (6th)',
   'حفظ',
   'ناظرہ',
 ]
+
+
 
 export const GUARDIAN_RELATIONS = [
   { value: 'والد', label: 'Father (والد)' },
@@ -39,6 +41,8 @@ export const GUARDIAN_RELATIONS = [
 ]
 
 export const REPORT_FIELDS = {
+  student_image: 'Photo',
+  status: 'Status',
   student_type: 'Student Type',
   serial_no: 'Serial No',
   entry_year: 'Entry Year',
@@ -65,6 +69,7 @@ export const REPORT_FIELDS = {
 }
 
 export const initialStudent = {
+  status: 'active',
   student_type: 'kutub',
   serial_no: '',
   entry_year: '',

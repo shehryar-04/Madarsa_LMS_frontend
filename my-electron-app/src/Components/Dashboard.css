@@ -1,8 +1,27 @@
 /* ═══════════════════════════════════════════════════════
-   Madarsa LMS – Premium Dashboard Styles
+   دارالعلوم اسلامیہ – Premium Dashboard Styles
    ═══════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ── Urdu / Arabic text — Jameel Noori Nastaleeq ── */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --urdu-font: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Noto Naskh Arabic', serif;
+}
+
+/* Apply Urdu font globally to all RTL / auto-direction text in the UI */
+[dir="rtl"],
+[dir="auto"],
+input[dir="auto"],
+textarea[dir="auto"],
+td[dir="rtl"],
+.urdu {
+  font-family: var(--urdu-font) !important;
+  font-size: 15px;
+  line-height: 1.9;
+}
 
 /* ── Design Tokens ────────────────────────────────── */
 :root {
@@ -1085,4 +1104,52 @@
 .clear-filters-btn:hover {
   background: var(--dash-red-light);
   border-color: var(--dash-red);
+}
+
+/* ── Classes Dashboard inputs & buttons ─────────── */
+.dash-input {
+  padding: 9px 12px;
+  border: 1px solid var(--dash-border);
+  border-radius: var(--dash-radius-sm);
+  background: var(--dash-surface);
+  color: var(--dash-text-bright);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color var(--dash-transition);
+}
+
+.dash-input:focus {
+  outline: none;
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px var(--dash-accent-light);
+}
+
+.dash-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--dash-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  border: 1px solid transparent;
+  transition: all var(--dash-transition);
+}
+
+.dash-btn-primary {
+  background: var(--dash-accent);
+  color: #fff;
+  border-color: var(--dash-accent);
+}
+
+.dash-btn-primary:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.dash-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

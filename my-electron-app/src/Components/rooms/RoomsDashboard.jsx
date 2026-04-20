@@ -26,7 +26,7 @@ function OccupancyBar({ current, capacity }) {
   )
 }
 
-function RoomCard({ room, isAdmin, onEdit, onDelete }) {
+function RoomCard({ room, isAdmin, onEdit, onDelete, onViewStudents }) {
   const imageUrl = getRoomImageUrl(room.image)
   const isFull = room.current_occupancy >= room.capacity
 
@@ -89,6 +89,13 @@ function RoomCard({ room, isAdmin, onEdit, onDelete }) {
             </button>
           </div>
         )}
+        <button
+          className="sidebar-btn"
+          style={{ width: '100%', marginTop: isAdmin ? '8px' : '12px', padding: '7px', fontSize: '12px', justifyContent: 'center', background: 'var(--dash-accent-light)', color: 'var(--dash-accent)' }}
+          onClick={() => onViewStudents(room.room_number)}
+        >
+          👥 View Students
+        </button>
       </div>
     </div>
   )
@@ -153,7 +160,7 @@ function RoomForm({ initial, onSubmit, onCancel, submitLabel }) {
   )
 }
 
-export default function RoomsDashboard({ user }) {
+export default function RoomsDashboard({ user, onRoomClick }) {
   const isAdmin = user?.user_metadata?.role === 'admin' || user?.role === 'admin'
   const { rooms, loading, error, success, fetchRooms, addRoom, updateRoom, deleteRoom } = useRooms()
 
@@ -251,6 +258,7 @@ export default function RoomsDashboard({ user }) {
                 isAdmin={isAdmin}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onViewStudents={onRoomClick}
               />
             ))}
           </div>

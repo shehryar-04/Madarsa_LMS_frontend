@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../Auth/SupabaseClient'
 import { initialStudent } from '../constants/student'
+import { backupStudentRecord } from './useLocalBackup'
 
 /** Builds the storage path and uploads a student image. Returns the path to store in DB. */
 async function uploadStudentImage(file, name, fatherName, serialNo) {
@@ -86,6 +87,9 @@ export function useStudentForm({ onSuccess }) {
       return
     }
 
+    // Back up the newly inserted record locally
+    if (insertData?.[0]) backupStudentRecord(insertData[0])
+
     setSuccess('Student added successfully')
     setForm(initialStudent)
     onSuccess?.()
@@ -113,8 +117,8 @@ export function useStudentEdit({ onSuccess }) {
     setError('')
     setSuccess('')
 
-    if (!editForm.name || !editForm.cnic || !editForm.district) {
-      setError('Name, CNIC, and District are required')
+    if (!editForm.name || !editForm.district) {
+      setError('Name and District are required')
       return
     }
 
@@ -140,6 +144,9 @@ export function useStudentEdit({ onSuccess }) {
       setError(updateErr.message)
       return
     }
+
+    // Back up the updated record locally
+    if (updateData?.[0]) backupStudentRecord(updateData[0])
 
     setSuccess('Student updated successfully')
     setEditForm(null)

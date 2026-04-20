@@ -1,17 +1,56 @@
 {
   "name": "my-electron-app",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "electron": "electron .",
-    "start": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\""
+    "start": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "build": "vite build",
+    "dist": "vite build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.madarsa.lms",
+    "productName": "دارالعلوم اسلامیہ",
+    "icon": "build/icon.ico",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signingHashAlgorithms": null,
+      "sign": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "دارالعلوم اسلامیہ"
+    }
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "electron": "^41.1.1",
+    "electron-builder": "^25.1.8",
+    "electron-rebuild": "^3.2.9",
     "electron-reload": "^2.0.0-alpha.1",
     "vite": "^8.0.1",
     "wait-on": "^9.0.4"

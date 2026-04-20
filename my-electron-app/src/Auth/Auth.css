@@ -39,6 +39,16 @@ body {
   margin-bottom: 24px;
 }
 
+.auth-logo-img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .auth-logo-icon {
   font-size: 48px;
   margin-bottom: 8px;
@@ -177,4 +187,33 @@ body {
 .role-admin {
   color: #ff6b6b;
   font-weight: bold;
+}
+
+/* ── Password field with show/hide toggle ──────── */
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  flex: 1;
+  padding-right: 44px;
+}
+
+.show-password-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  line-height: 1;
+  color: #888;
+  transition: color 0.2s;
+}
+
+.show-password-btn:hover {
+  color: #4a90e2;
 }

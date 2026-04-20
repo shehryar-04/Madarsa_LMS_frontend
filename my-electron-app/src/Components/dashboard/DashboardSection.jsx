@@ -43,9 +43,14 @@ function RecentStudentRow({ student, onClick }) {
   )
 }
 
-export default function DashboardSection({ stats, recentStudents, loading, onRefresh, onStudentClick }) {
+export default function DashboardSection({ stats, recentStudents, loading, onRefresh, onStudentClick, onClassClick }) {
   const classCount = Object.keys(stats.byClass).length
   const avgPerClass = classCount > 0 ? Math.round(stats.total / classCount) : 0
+
+  // Show all distinct classes sorted by student count descending
+  const knownClasses = Object.entries(stats.byClass)
+    .filter(([classLevel]) => classLevel && classLevel !== 'Unknown')
+    .sort((a, b) => b[1] - a[1])
 
   return (
     <div className="dash-content">
@@ -74,13 +79,19 @@ export default function DashboardSection({ stats, recentStudents, loading, onRef
             <h3 className="dash-card-title">Students by Class</h3>
             {classCount === 0 ? (
               <p className="dash-empty">No class data yet</p>
+            ) : knownClasses.length === 0 ? (
+              <p className="dash-empty">No classes found</p>
             ) : (
               <div className="class-chips">
-                {Object.entries(stats.byClass)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([classLevel, count]) => (
-                    <div className="class-chip" key={classLevel}>
-                      <span className="class-chip-name">{classLevel || 'Unknown'}</span>
+                {knownClasses.map(([classLevel, count]) => (
+                    <div
+                      className="class-chip"
+                      key={classLevel}
+                      onClick={() => onClassClick?.(classLevel)}
+                      style={{ cursor: 'pointer' }}
+                      title={`View all students in ${classLevel}`}
+                    >
+                      <span className="class-chip-name">{classLevel}</span>
                       <span className="class-chip-count">{count}</span>
                     </div>
                   ))}

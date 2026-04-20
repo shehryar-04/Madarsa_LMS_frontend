@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { supabase } from '../Auth/SupabaseClient'
 
 import Sidebar from './layout/Sidebar'
@@ -7,16 +7,19 @@ import Alert from './shared/Alert'
 
 import DashboardSection from './dashboard/DashboardSection'
 import AddStudentSection from './students/AddStudentSection'
+import EditStudentSection from './students/EditStudentSection'
 import AllStudentsSection from './students/AllStudentsSection'
 import StudentModal from './students/StudentModal'
 import SanadDashboard from './sanad/SanadDashboard'
-import ReportModal from './pdf/ReportModal'
 import RoomsDashboard from './rooms/RoomsDashboard'
+import AuditDashboard from './audit/AuditDashboard'
+import ClassesDashboard from './classes/ClassesDashboard'
 
 import { useStudentData } from '../hooks/useStudentData'
 import { useStudentForm, useStudentEdit } from '../hooks/useStudentForm'
 import { usePdfReport } from '../hooks/usePdfReport'
 import { useRooms } from '../hooks/useRooms'
+import { useLocalBackup } from '../hooks/useLocalBackup'
 
 import './Dashboard.css'
 
@@ -28,19 +31,19 @@ export default function StudentDashboard({ user, onLogout }) {
 
   // ── Role ──
   const [dbRole, setDbRole] = useState(null)
-  const isAdmin = dbRole === 'admin' || user?.user_metadata?.role === 'admin' || user?.role === 'admin'
+  const isSuperAdmin = dbRole === 'super_admin'
+  const isAdmin = isSuperAdmin || dbRole === 'admin' || user?.user_metadata?.role === 'admin' || user?.role === 'admin'
 
   // ── Search & filter state ──
   const [searchQuery, setSearchQuery] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
-  const [filterType, setFilterType] = useState('')
-  const [filterDistrict, setFilterDistrict] = useState('')
-  const [filterYear, setFilterYear] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
+  const [showInactive, setShowInactive] = useState(true)
+  const [filterClass, setFilterClass] = useState('')   // set when clicking a class chip
+  const [filterRoom, setFilterRoom] = useState('')     // set when clicking a room card
   const [currentPage, setCurrentPage] = useState(1)
   const searchTimer = useRef(null)
 
-  const filters = { appliedSearch, filterType, filterDistrict, filterYear }
+  const filters = { appliedSearch, filterType: '', filterDistrict: '', filterYear: '', filterClass, filterRoom, showInactive }
 
   // ── Data hook ──
   const {
@@ -78,7 +81,7 @@ export default function StudentDashboard({ user, onLogout }) {
     error: editError, success: editSuccess,
   } = useStudentEdit({
     onSuccess: () => {
-      setSelectedStudent(null)
+      setEditForm(null)
       fetchDashboardStats()
       fetchFilterOptions()
       fetchStudentPage(currentPage, filters)
@@ -87,13 +90,17 @@ export default function StudentDashboard({ user, onLogout }) {
 
   // ── PDF report ──
   const {
-    pdfLoading, showReportModal, setShowReportModal,
-    selectedFields, setSelectedFields, generatePDF,
-  } = usePdfReport({ buildFilteredQuery, filters })
+    pdfLoading,
+    selectedFields, setSelectedFields,
+    openPreview, downloadPDF,
+  } = usePdfReport({ buildFilteredQuery })
 
   // ── Rooms (for room dropdown in student form) ──
   const { rooms, fetchRooms } = useRooms()
   useEffect(() => { fetchRooms() }, [fetchRooms])
+
+  // ── Local backup / offline sync ──
+  const { isOnline, lastSync, syncing, syncNow } = useLocalBackup()
 
   // ── Merge errors/successes from sub-hooks ──
   useEffect(() => {
@@ -118,12 +125,12 @@ export default function StudentDashboard({ user, onLogout }) {
     fetchFilterOptions()
   }, [fetchDashboardStats, fetchFilterOptions])
 
-  // ── Fetch student page when section/filters/page change ──
+  // ── Fetch student page when section/page/search/inactive toggle change ──
   useEffect(() => {
     if (activeSection === 'allStudents') {
       fetchStudentPage(currentPage, filters)
     }
-  }, [activeSection, currentPage, appliedSearch, filterType, filterDistrict, filterYear])
+  }, [activeSection, currentPage, appliedSearch, showInactive, filterClass, filterRoom])
 
   // ── Search debounce ──
   const handleSearchChange = (value) => {
@@ -135,21 +142,34 @@ export default function StudentDashboard({ user, onLogout }) {
     }, 400)
   }
 
-  // ── Filter change handler ──
-  const handleFilterChange = (key, value) => {
-    if (key === 'type') setFilterType(value)
-    if (key === 'district') setFilterDistrict(value)
-    if (key === 'year') setFilterYear(value)
+  // ── Navigate to All Students with a class or room filter ──
+  const goToStudentsByClass = (classLevel) => {
+    setFilterClass(classLevel)
+    setFilterRoom('')
     setCurrentPage(1)
+    setActiveSection('allStudents')
   }
 
-  const clearFilters = () => {
-    setFilterType('')
-    setFilterDistrict('')
-    setFilterYear('')
-    setSearchQuery('')
-    setAppliedSearch('')
+  const goToStudentsByRoom = (roomNumber) => {
+    setFilterRoom(roomNumber)
+    setFilterClass('')
     setCurrentPage(1)
+    setActiveSection('allStudents')
+  }
+
+  const clearQuickFilters = () => {
+    setFilterClass('')
+    setFilterRoom('')
+  }
+
+  // ── Edit student — opens full-screen, not modal ──
+  const handleEditClick = () => {
+    setEditForm({ ...selectedStudent })
+    setSelectedStudent(null)
+  }
+
+  const handleEditCancel = () => {
+    setEditForm(null)
   }
 
   // ── PDF field toggle ──
@@ -166,10 +186,13 @@ export default function StudentDashboard({ user, onLogout }) {
         onNavigate={setActiveSection}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+        isSuperAdmin={isSuperAdmin}
       />
 
       <div className="dash-main-area">
-        <Topbar user={user} dbRole={dbRole} onLogout={onLogout} />
+      <Topbar user={user} dbRole={dbRole} onLogout={onLogout}
+        isOnline={isOnline} syncing={syncing} lastSync={lastSync} onSyncNow={syncNow}
+      />
 
         <main className="dash-main-content">
           <Alert error={error} success={success} />
@@ -181,6 +204,7 @@ export default function StudentDashboard({ user, onLogout }) {
               loading={statsLoading}
               onRefresh={fetchDashboardStats}
               onStudentClick={setSelectedStudent}
+              onClassClick={goToStudentsByClass}
             />
           )}
 
@@ -190,61 +214,68 @@ export default function StudentDashboard({ user, onLogout }) {
               onChange={handleChange}
               onFileChange={handleFileChange}
               onSubmit={handleSubmit}
+              isOnline={isOnline}
             />
           )}
 
-          {activeSection === 'allStudents' && (
+          {editForm && (
+            <EditStudentSection
+              student={selectedStudent || editForm}
+              editForm={editForm}
+              onChange={handleEditChange}
+              onFileChange={handleEditFileChange}
+              onSubmit={handleUpdate}
+              onCancel={handleEditCancel}
+              rooms={rooms}
+              isOnline={isOnline}
+            />
+          )}
+
+          {!editForm && activeSection === 'allStudents' && (
             <AllStudentsSection
               students={students}
               totalStudents={totalStudents}
               loading={listLoading}
               searchQuery={searchQuery}
               onSearchChange={handleSearchChange}
-              filterType={filterType}
-              filterDistrict={filterDistrict}
-              filterYear={filterYear}
-              districtOptions={districtOptions}
-              yearOptions={yearOptions}
-              showFilters={showFilters}
-              onToggleFilters={() => setShowFilters(f => !f)}
-              onFilterChange={handleFilterChange}
-              onClearFilters={clearFilters}
+              showInactive={showInactive}
+              onToggleInactive={() => { setShowInactive(v => !v); setCurrentPage(1) }}
+              filterClass={filterClass}
+              filterRoom={filterRoom}
+              onClearQuickFilter={clearQuickFilters}
               currentPage={currentPage}
               onPageChange={setCurrentPage}
               onStudentClick={setSelectedStudent}
-              onOpenReport={() => setShowReportModal(true)}
+              selectedFields={selectedFields}
+              onToggleField={toggleReportField}
+              onOpenPreview={(rf) => openPreview(setDataError, rf)}
+              onDownloadPDF={() => downloadPDF(setDataError)}
               pdfLoading={pdfLoading}
+              rooms={rooms}
+              districtOptions={districtOptions}
+              yearOptions={yearOptions}
             />
           )}
 
           {activeSection === 'sanadRecords' && <SanadDashboard user={user} />}
-          {activeSection === 'rooms' && <RoomsDashboard user={user} />}
+          {activeSection === 'rooms' && <RoomsDashboard user={user} onRoomClick={goToStudentsByRoom} />}
+          {activeSection === 'classes' && (
+            <ClassesDashboard
+              isAdmin={isAdmin}
+              onClassClick={(cls) => { goToStudentsByClass(cls) }}
+            />
+          )}
+          {activeSection === 'auditLog' && isSuperAdmin && <AuditDashboard />}
         </main>
       </div>
 
-      {/* Student detail / edit modal */}
-      {selectedStudent && (
+      {/* Student detail modal — view only, edit opens full screen */}
+      {selectedStudent && !editForm && (
         <StudentModal
           student={selectedStudent}
           isAdmin={isAdmin}
-          editForm={editForm}
-          rooms={rooms}
-          onClose={() => { setSelectedStudent(null); setEditForm(null) }}
-          onEdit={() => setEditForm({ ...selectedStudent })}
-          onEditChange={handleEditChange}
-          onEditFileChange={handleEditFileChange}
-          onUpdate={handleUpdate}
-        />
-      )}
-
-      {/* PDF report field selector */}
-      {showReportModal && (
-        <ReportModal
-          selectedFields={selectedFields}
-          onToggleField={toggleReportField}
-          onGenerate={() => generatePDF(setDataError)}
-          onClose={() => setShowReportModal(false)}
-          loading={pdfLoading}
+          onClose={() => setSelectedStudent(null)}
+          onEdit={handleEditClick}
         />
       )}
     </div>

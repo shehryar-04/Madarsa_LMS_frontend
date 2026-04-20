@@ -1,23 +1,31 @@
 import React from 'react'
+import madarsaLogo from '../../assets/مونوجامعہ دارالعلوم الاسلامیہ.png'
 
-const NAV_ITEMS = [
+const BASE_NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
   { id: 'allStudents', label: 'All Students', icon: '👥' },
   { id: 'addStudent', label: 'Add Student', icon: '➕' },
   { id: 'sanadRecords', label: 'Sanad Records', icon: '📜' },
   { id: 'rooms', label: 'Rooms', icon: '🚪' },
+  { id: 'classes', label: 'Classes', icon: '🎓' },
 ]
 
-export default function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse }) {
+const SUPER_ADMIN_NAV = [
+  { id: 'auditLog', label: 'Audit Log', icon: '🔍' },
+]
+
+export default function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, isSuperAdmin = false }) {
+  const navItems = isSuperAdmin ? [...BASE_NAV, ...SUPER_ADMIN_NAV] : BASE_NAV
+
   return (
     <aside className="dash-sidebar">
       <div className="sidebar-brand">
-        <span className="sidebar-logo">📚</span>
-        {!collapsed && <span className="sidebar-title">Madarsa LMS</span>}
+        <img src={madarsaLogo} alt="logo" style={{ width: '36px', height: '36px', objectFit: 'contain', flexShrink: 0 }} />
+        {!collapsed && <span className="sidebar-title">دارالعلوم اسلامیہ</span>}
       </div>
 
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map(item => (
+        {navItems.map(item => (
           <button
             key={item.id}
             className={`sidebar-btn ${activeSection === item.id ? 'active' : ''}`}
