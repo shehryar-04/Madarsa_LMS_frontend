@@ -1,6 +1,18 @@
 import React, { useState } from 'react'
 import { STUDENT_TYPES, GUARDIAN_RELATIONS } from '../../constants/student'
 import { useClasses } from '../../hooks/useClasses'
+import { supabase } from '../../Auth/SupabaseClient'
+
+function ExistingImage({ path }) {
+  const { data } = supabase.storage.from('Darul-Uloom-Students').getPublicUrl(path)
+  return (
+    <img
+      src={data?.publicUrl}
+      alt="student"
+      style={{ width: '100px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '2px solid var(--dash-accent)' }}
+    />
+  )
+}
 
 /** Auto-formats CNIC as 35201-1234567-1 */
 function formatCnic(raw) {
@@ -28,6 +40,13 @@ export default function StudentFormFields({ formState, onChange, onFileChange, r
     setImagePreview(URL.createObjectURL(file))
   }
 
+  const handleRemoveImage = () => {
+    // Clear the file selection and the stored path
+    onFileChange?.('student_image_file', null)
+    onChange({ target: { name: 'student_image', value: '' } })
+    setImagePreview(null)
+  }
+
   // Intercept CNIC and phone changes to auto-format
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -50,10 +69,22 @@ export default function StudentFormFields({ formState, onChange, onFileChange, r
             <span>Student Image (تصویر طالب علم)</span>
             <input type="file" accept="image/*" onChange={handleImageChange} />
             {imagePreview && (
-              <img src={imagePreview} alt="preview" style={{ marginTop: '10px', width: '100px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '2px solid var(--dash-accent)' }} />
+              <div style={{ marginTop: '10px', display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+                <img src={imagePreview} alt="preview" style={{ width: '100px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '2px solid var(--dash-accent)' }} />
+                <button type="button" onClick={handleRemoveImage}
+                  style={{ fontSize: '12px', color: 'var(--dash-red)', background: 'var(--dash-red-light)', border: '1px solid var(--dash-red)', borderRadius: '6px', padding: '3px 10px', cursor: 'pointer' }}>
+                  🗑️ Remove Image
+                </button>
+              </div>
             )}
             {formState.student_image && !formState.student_image_file && !imagePreview && (
-              <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--dash-green)' }}>✓ Image stored in bucket</div>
+              <div style={{ marginTop: '10px', display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+                <ExistingImage path={formState.student_image} />
+                <button type="button" onClick={handleRemoveImage}
+                  style={{ fontSize: '12px', color: 'var(--dash-red)', background: 'var(--dash-red-light)', border: '1px solid var(--dash-red)', borderRadius: '6px', padding: '3px 10px', cursor: 'pointer' }}>
+                  🗑️ Remove Image
+                </button>
+              </div>
             )}
           </label>
 

@@ -11,7 +11,6 @@ function AvatarCell({ student }) {
       </div>
     )
   }
-
   const { data } = supabase.storage.from('Darul-Uloom-Students').getPublicUrl(student.student_image)
   const url = data?.publicUrl
 

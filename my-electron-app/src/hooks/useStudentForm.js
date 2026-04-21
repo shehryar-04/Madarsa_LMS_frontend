@@ -5,22 +5,15 @@ import { backupStudentRecord } from './useLocalBackup'
 
 /** Builds the storage path and uploads a student image. Returns the path to store in DB. */
 async function uploadStudentImage(file, name, fatherName, serialNo) {
-  const cleanName = (name || 'Unknown').trim().replace(/\s+/g, '_')
-  const cleanFather = (fatherName || 'Unknown').trim().replace(/\s+/g, '_')
-  const serialPart = serialNo?.trim() ? `_${serialNo.trim().replace(/\s+/g, '_')}` : ''
-  const ext = file.name.split('.').pop()
-  // This is the path inside the bucket (no bucket name prefix)
-  const storagePath = `images/${cleanName}_${cleanFather}${serialPart}.${ext}`
+  const serial = (serialNo || '').trim().replace(/\s+/g, '_') || Date.now().toString()
+  const ext    = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  const storagePath = `images/${serial}.${ext}`
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from('Darul-Uloom-Students')
     .upload(storagePath, file, { upsert: true })
 
   if (error) throw new Error('Image upload failed: ' + error.message)
-
-  // data.path is the path inside the bucket; data.fullPath includes the bucket name.
-  // We always want just the bucket-relative path for getPublicUrl() to work correctly.
-  // Use our calculated storagePath as the canonical value since we control it.
   return storagePath
 }
 
