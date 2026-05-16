@@ -58,8 +58,8 @@ export default function DashboardSection({ stats, recentStudents, loading, onRef
     <div className="dash-content">
       <div className="dash-header">
         <div>
-          <h2 className="dash-page-title">{t('dash.title')}</h2>
-          <p className="dash-page-subtitle">{t('dash.subtitle')}</p>
+          <h2 className="dash-page-title">Dashboard Overview</h2>
+          <p className="dash-page-subtitle">Real-time student analytics at a glance</p>
         </div>
         <button className="dash-refresh-btn" onClick={onRefresh}>
           <span className="refresh-icon">🔄</span> {t('dash.refresh')}
