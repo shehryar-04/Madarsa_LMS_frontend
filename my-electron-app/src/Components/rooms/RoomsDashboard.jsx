@@ -162,10 +162,12 @@ function RoomForm({ initial, onSubmit, onCancel, submitLabel }) {
 
 export default function RoomsDashboard({ user, onRoomClick }) {
   const isAdmin = user?.user_metadata?.role === 'admin' || user?.role === 'admin'
+    || user?.user_metadata?.role === 'super_admin' || user?.role === 'super_admin'
   const { rooms, loading, error, success, fetchRooms, addRoom, updateRoom, deleteRoom } = useRooms()
 
   const [view, setView] = useState('list') // 'list' | 'add' | 'edit'
   const [editTarget, setEditTarget] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => { fetchRooms() }, [fetchRooms])
 
@@ -188,6 +190,10 @@ export default function RoomsDashboard({ user, onRoomClick }) {
     setEditTarget({ ...room, image_file: null })
     setView('edit')
   }
+
+  const filteredRooms = searchQuery.trim()
+    ? rooms.filter(r => (r.room_number || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    : rooms
 
   const totalCapacity = rooms.reduce((s, r) => s + r.capacity, 0)
   const totalOccupied = rooms.reduce((s, r) => s + r.current_occupancy, 0)
@@ -244,25 +250,40 @@ export default function RoomsDashboard({ user, onRoomClick }) {
 
       {/* Room grid */}
       {view === 'list' && (
-        loading ? <LoadingSpinner message="Loading rooms…" /> :
-        rooms.length === 0 ? (
-          <div className="dash-card">
-            <p className="dash-empty">No rooms added yet.{isAdmin ? ' Click "Add Room" to get started.' : ''}</p>
+        <>
+          <div style={{ marginBottom: '16px' }}>
+            <input
+              className="dash-input"
+              type="text"
+              placeholder="🔍 Search by room number..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ width: '100%', maxWidth: '320px', boxSizing: 'border-box' }}
+            />
           </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
-            {rooms.map(room => (
-              <RoomCard
-                key={room.id}
-                room={room}
-                isAdmin={isAdmin}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onViewStudents={onRoomClick}
-              />
-            ))}
-          </div>
-        )
+          {loading ? <LoadingSpinner message="Loading rooms…" /> :
+          filteredRooms.length === 0 ? (
+            <div className="dash-card">
+              <p className="dash-empty">
+                {searchQuery.trim() ? `No rooms matching "${searchQuery}"` : 'No rooms added yet.'}
+                {!searchQuery.trim() && isAdmin ? ' Click "Add Room" to get started.' : ''}
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+              {filteredRooms.map(room => (
+                <RoomCard
+                  key={room.id}
+                  room={room}
+                  isAdmin={isAdmin}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onViewStudents={onRoomClick}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

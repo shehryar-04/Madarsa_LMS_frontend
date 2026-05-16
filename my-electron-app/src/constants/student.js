@@ -66,10 +66,15 @@ export const REPORT_FIELDS = {
   guardian_cnic: 'Guardian CNIC',
   room_number: 'Room Number',
   guardian_name: 'Guardian Name',
+  blood_group: 'Blood Group',
+  previous_institution: 'Previous Institution',
+  previous_studies: 'Previous Studies',
+  last_year_marks: 'Last Year Marks',
+  miyar_e_kamyabi: 'Miyar e Kamyabi',
 }
 
 export const initialStudent = {
-  status: 'active',
+  status: 'current',
   student_type: 'kutub',
   serial_no: '',
   entry_year: '',
@@ -95,4 +100,9 @@ export const initialStudent = {
   guardian_name: '',
   student_image: '',
   student_image_file: null,
+  blood_group: '',
+  previous_institution: '',
+  previous_studies: '',
+  last_year_marks: '',
+  miyar_e_kamyabi: '',
 }

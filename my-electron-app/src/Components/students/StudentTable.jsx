@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { supabase } from '../../Auth/SupabaseClient'
+import { useLabels } from '../../hooks/useUiLabels'
 
 function AvatarCell({ student }) {
   const [lightbox, setLightbox] = useState(false)
@@ -11,6 +12,7 @@ function AvatarCell({ student }) {
       </div>
     )
   }
+
   const { data } = supabase.storage.from('Darul-Uloom-Students').getPublicUrl(student.student_image)
   const url = data?.publicUrl
 
@@ -20,7 +22,6 @@ function AvatarCell({ student }) {
         className="student-avatar"
         onClick={e => { e.stopPropagation(); setLightbox(true) }}
         style={{ cursor: 'zoom-in' }}
-        title="Click to enlarge"
       >
         <img src={url} alt={student.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
       </div>
@@ -49,33 +50,35 @@ function AvatarCell({ student }) {
 }
 
 export default function StudentTable({ students, onRowClick }) {
+  const { t } = useLabels()
+
   return (
     <div className="dash-table-wrap">
       <table className="dash-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Father Name</th>
-            <th>Serial No</th>
-            <th>Type</th>
-            <th>Class</th>
-            <th>District</th>
-            <th>CNIC</th>
-            <th>Status</th>
+            <th>{t('table.serialNo')}</th>
+            <th>{t('table.name')}</th>
+            <th>{t('table.fatherName')}</th>
+            <th>{t('table.type')}</th>
+            <th>{t('table.class')}</th>
+            <th>{t('table.district')}</th>
+            <th>{t('table.cnic')}</th>
+            <th>{t('table.status')}</th>
           </tr>
         </thead>
         <tbody>
           {students.map(student => {
-            const inactive = student.status === 'inactive'
+            const isCurrent = student.status === 'current'
+            const isPassed = student.status === 'passed'
             return (
               <tr
                 key={student.id}
-                className="cligckable-row"
+                className="clickable-row"
                 onClick={() => onRowClick(student)}
-                style={{ opacity: inactive ? 0.55 : 1 }}
+                style={{ opacity: (!isCurrent && !isPassed) ? 0.55 : 1 }}
               >
-                <td className="mono" style={{ color: 'var(--dash-text)', fontSize: '12px' }}>{student.id}</td>
+                <td className="mono" style={{ color: 'var(--dash-text)', fontSize: '12px' }}>{student.serial_no || '—'}</td>
                 <td>
                   <div className="student-name-cell">
                     <AvatarCell student={student} />
@@ -83,7 +86,6 @@ export default function StudentTable({ students, onRowClick }) {
                   </div>
                 </td>
                 <td>{student.father_name || '—'}</td>
-                <td className="mono">{student.serial_no || '—'}</td>
                 <td>
                   {student.student_type && (
                     <span className="class-badge">{student.student_type.toUpperCase()}</span>
@@ -95,10 +97,10 @@ export default function StudentTable({ students, onRowClick }) {
                 <td>
                   <span style={{
                     fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px',
-                    background: inactive ? 'var(--dash-red-light)' : 'var(--dash-green-light)',
-                    color: inactive ? 'var(--dash-red)' : 'var(--dash-green)',
+                    background: isCurrent ? 'var(--dash-green-light)' : isPassed ? 'var(--dash-accent-light)' : 'var(--dash-red-light)',
+                    color: isCurrent ? 'var(--dash-green)' : isPassed ? 'var(--dash-accent)' : 'var(--dash-red)',
                   }}>
-                    {inactive ? 'Inactive' : 'Active'}
+                    {isCurrent ? t('table.active') : isPassed ? t('table.passed') : t('table.inactive')}
                   </span>
                 </td>
               </tr>

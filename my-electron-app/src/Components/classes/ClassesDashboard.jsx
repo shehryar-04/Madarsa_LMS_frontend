@@ -3,7 +3,7 @@ import { supabase } from '../../Auth/SupabaseClient'
 import { invalidateClassCache } from '../../hooks/useClasses'
 import Alert from '../shared/Alert'
 import LoadingSpinner from '../shared/LoadingSpinner'
-import { printWazifaReport } from './WazifaReport'
+import { printWazifaReport, getWazifaStudentFields, buildWazifaImageMap } from './WazifaReport'
 
 const URDU_MONTHS = [
   'جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون',
@@ -147,20 +147,26 @@ export default function ClassesDashboard({ isAdmin }) {
   const handlePrintReport = async () => {
     if (!reportModal) return
     setReportLoading(true)
+    const studentFields = getWazifaStudentFields()
+    // Always fetch student_image + id for image map
+    const fieldsToFetch = [...new Set([...studentFields, 'student_image', 'id'])]
     const { data, error: fetchErr } = await supabase
       .from('students')
-      .select('name, father_name, class_level')
+      .select(fieldsToFetch.join(', '))
       .eq('class_level', reportModal.className)
-      .eq('status', 'active')
+      .eq('status', 'current')
       .order('name', { ascending: true })
+    if (fetchErr) { setError(fetchErr.message); setReportLoading(false); return }
+    // Fetch images as base64
+    const imageMap = await buildWazifaImageMap(data || [])
     setReportLoading(false)
-    if (fetchErr) { setError(fetchErr.message); return }
     printWazifaReport({
       className: reportModal.className,
       wazifa: reportModal.wazifa,
       students: data || [],
       month: URDU_MONTHS[reportMonth],
       year: reportYear,
+      imageMap,
     })
     setReportModal(null)
   }

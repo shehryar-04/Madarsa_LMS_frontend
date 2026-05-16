@@ -3,8 +3,9 @@ import SearchBar from '../shared/SearchBar'
 import StudentTable from './StudentTable'
 import Pagination from '../shared/Pagination'
 import LoadingSpinner from '../shared/LoadingSpinner'
-import { PAGE_SIZE, REPORT_FIELDS, STUDENT_TYPES } from '../../constants/student'
+import { PAGE_SIZE, STUDENT_TYPES } from '../../constants/student'
 import { useClasses } from '../../hooks/useClasses'
+import { useLabels } from '../../hooks/useUiLabels'
 
 const MAX_FIELDS = 8
 
@@ -22,76 +23,68 @@ export default function AllStudentsSection({
   filterClass, filterRoom, onClearQuickFilter,
   currentPage, onPageChange,
   onStudentClick,
-  // report props
   selectedFields, onToggleField,
   onOpenPreview, onDownloadPDF,
   pdfLoading,
   rooms = [], districtOptions = [], yearOptions = [],
 }) {
+  const { t, tJSON, reportFields } = useLabels()
+  const REPORT_FIELDS = reportFields()
+  const studentTypes = tJSON('opt.studentTypes') || STUDENT_TYPES
+
   const totalPages = Math.ceil(totalStudents / PAGE_SIZE)
   const startRow = (currentPage - 1) * PAGE_SIZE + 1
   const endRow = Math.min(currentPage * PAGE_SIZE, totalStudents)
   const paginationInfo = totalStudents > 0
     ? `Showing ${startRow}–${endRow} of ${totalStudents.toLocaleString()} students`
-    : 'No students found'
+    : t('all.noStudents')
 
   const activeQuickFilter = filterClass ? `Class: ${filterClass}` : filterRoom ? `Room: ${filterRoom}` : null
 
-  // ── Ctrl+F → focus search bar ──
   const searchInputRef = useRef(null)
   useEffect(() => {
     const handler = (e) => {
-      if (e.ctrlKey && e.key === 'f') {
-        e.preventDefault()
-        searchInputRef.current?.focus()
-        searchInputRef.current?.select()
-      }
+      if (e.ctrlKey && e.key === 'f') { e.preventDefault(); searchInputRef.current?.focus(); searchInputRef.current?.select() }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  // ── Report panel state ──
   const [showReportPanel, setShowReportPanel] = useState(false)
   const [filterType, setFilterType] = useState('')
   const [filterDistrict, setFilterDistrict] = useState('')
   const [filterYear, setFilterYear] = useState('')
   const [filterRoomReport, setFilterRoomReport] = useState('')
   const [filterClassReport, setFilterClassReport] = useState('')
-  const [filterStatus, setFilterStatus] = useState('active')
+  const [filterStatus, setFilterStatus] = useState('current')
+  const [filterDateFrom, setFilterDateFrom] = useState('')
+  const [filterDateTo, setFilterDateTo] = useState('')
 
   const { classNames } = useClasses()
 
-  const reportFilters = { filterType, filterDistrict, filterYear, filterRoom: filterRoomReport, filterClass: filterClassReport, filterStatus }
-  const hasFilter = filterType || filterDistrict || filterYear || filterRoomReport || filterClassReport || filterStatus
+  const reportFiltersObj = { filterType, filterDistrict, filterYear, filterRoom: filterRoomReport, filterClass: filterClassReport, filterStatus, filterDateFrom, filterDateTo }
+  const hasFilter = filterType || filterDistrict || filterYear || filterRoomReport || filterClassReport || filterStatus || filterDateFrom || filterDateTo
   const canPreview = hasFilter && selectedFields.length > 0 && !pdfLoading
 
-  // Listen for DOWNLOAD_PDF message posted by the preview window
   useEffect(() => {
-    const handler = (e) => {
-      if (e.data?.type === 'DOWNLOAD_PDF') onDownloadPDF()
-    }
+    const handler = (e) => { if (e.data?.type === 'DOWNLOAD_PDF') onDownloadPDF() }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
   }, [onDownloadPDF])
 
-  // Press Enter in search → open first matching student's modal
   const handleSearchKeyDown = (e) => {
-    if (e.key === 'Enter' && students.length > 0) {
-      onStudentClick(students[0])
-    }
+    if (e.key === 'Enter' && students.length > 0) onStudentClick(students[0])
   }
 
   return (
     <div className="dash-content">
-      {/* ── Header ── */}
       <div className="dash-header">
         <div>
-          <h2 className="dash-page-title">All Students</h2>
+          <h2 className="dash-page-title">{t('all.title')}</h2>
           <p className="dash-page-subtitle">{paginationInfo}</p>
         </div>
         <div className="dash-header-actions">
-          <SearchBar value={searchQuery} onChange={onSearchChange} placeholder="Search… Enter to open (Ctrl+F)" inputRef={searchInputRef} onKeyDown={handleSearchKeyDown} />
+          <SearchBar value={searchQuery} onChange={onSearchChange} placeholder={t('all.searchPlaceholder')} inputRef={searchInputRef} onKeyDown={handleSearchKeyDown} />
           <label style={{
             display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600,
             cursor: 'pointer', color: showInactive ? 'var(--dash-red)' : 'var(--dash-text)',
@@ -100,18 +93,14 @@ export default function AllStudentsSection({
           }}>
             <input type="checkbox" checked={showInactive} onChange={onToggleInactive}
               style={{ accentColor: 'var(--dash-red)', width: '14px', height: '14px' }} />
-            Show Inactive
+            {t('all.showInactive')}
           </label>
-          <button
-            className={`filter-toggle-btn ${showReportPanel ? 'active' : ''}`}
-            onClick={() => setShowReportPanel(v => !v)}
-          >
-            📄 {showReportPanel ? 'Close Report' : 'Export Report'}
+          <button className={`filter-toggle-btn ${showReportPanel ? 'active' : ''}`} onClick={() => setShowReportPanel(v => !v)}>
+            {showReportPanel ? t('all.closeReport') : t('all.exportReport')}
           </button>
         </div>
       </div>
 
-      {/* ── Quick filter tag ── */}
       {activeQuickFilter && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
           <span style={{
@@ -120,56 +109,58 @@ export default function AllStudentsSection({
             fontSize: '13px', fontWeight: 600, border: '1px solid var(--dash-accent)',
           }}>
             🔍 {activeQuickFilter}
-            <button onClick={onClearQuickFilter}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--dash-accent)', fontSize: '14px', padding: 0, lineHeight: 1 }}>
-              ✕
-            </button>
+            <button onClick={onClearQuickFilter} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--dash-accent)', fontSize: '14px', padding: 0, lineHeight: 1 }}>✕</button>
           </span>
         </div>
       )}
 
-      {/* ── Report Config Panel ── */}
       {showReportPanel && (
         <div className="dash-card" style={{ marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <h3 className="dash-card-title" style={{ margin: 0 }}>📄 Report Configuration</h3>
-            <button className="sidebar-btn" style={{ fontSize: '12px', padding: '4px 10px' }}
-              onClick={() => setShowReportPanel(false)}>✕ Close</button>
+            <h3 className="dash-card-title" style={{ margin: 0 }}>{t('report.title')}</h3>
+            <button className="sidebar-btn" style={{ fontSize: '12px', padding: '4px 10px' }} onClick={() => setShowReportPanel(false)}>✕ Close</button>
           </div>
 
-          {/* Filters */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '16px' }}>
             {[
-              { label: 'Student Type', value: filterType, set: setFilterType,
-                options: STUDENT_TYPES.map(t => ({ value: t, label: t.toUpperCase() })) },
-              { label: 'Class', value: filterClassReport, set: setFilterClassReport,
+              { label: t('report.studentType'), value: filterType, set: setFilterType,
+                options: studentTypes.map(tp => ({ value: tp, label: tp.toUpperCase() })) },
+              { label: t('report.class'), value: filterClassReport, set: setFilterClassReport,
                 options: classNames.map(c => ({ value: c, label: c })) },
-              { label: 'District', value: filterDistrict, set: setFilterDistrict,
+              { label: t('report.district'), value: filterDistrict, set: setFilterDistrict,
                 options: districtOptions.map(d => ({ value: d, label: d })) },
-              { label: 'Entry Year', value: filterYear, set: setFilterYear,
+              { label: t('report.entryYear'), value: filterYear, set: setFilterYear,
                 options: yearOptions.map(y => ({ value: y, label: y })) },
-              { label: 'Room No.', value: filterRoomReport, set: setFilterRoomReport,
+              { label: t('report.roomNo'), value: filterRoomReport, set: setFilterRoomReport,
                 options: rooms.map(r => ({ value: r.room_number, label: `Room ${r.room_number}` })) },
-              { label: 'Status', value: filterStatus, set: setFilterStatus,
-                options: [{ value: 'active', label: 'Active only' }, { value: 'inactive', label: 'Inactive only' }] },
+              { label: t('report.status'), value: filterStatus, set: setFilterStatus,
+                options: [{ value: 'current', label: t('report.activeOnly') }, { value: 'rusticated', label: t('report.inactiveOnly') }, { value: 'passed', label: t('report.passedOnly') }] },
             ].map(({ label, value, set, options }) => (
               <div key={label}>
                 <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--dash-text)', display: 'block', marginBottom: '4px' }}>{label}</span>
                 <select value={value} onChange={e => set(e.target.value)} style={selStyle}>
-                  <option value="">All</option>
+                  <option value="">{t('report.all')}</option>
                   {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
             ))}
+            {/* Date range filter */}
+            <div>
+              <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--dash-text)', display: 'block', marginBottom: '4px' }}>From Date</span>
+              <input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} style={{ ...selStyle, cursor: 'text' }} />
+            </div>
+            <div>
+              <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--dash-text)', display: 'block', marginBottom: '4px' }}>To Date</span>
+              <input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} style={{ ...selStyle, cursor: 'text' }} />
+            </div>
           </div>
 
-          {/* Column selector */}
           <div style={{ marginBottom: '16px' }}>
             <p style={{ fontSize: '12px', color: 'var(--dash-text)', margin: '0 0 8px' }}>
-              Columns&nbsp;
+              {t('report.columns')}&nbsp;
               <span style={{ color: 'var(--dash-accent)', fontWeight: 600 }}>({selectedFields.length}/{MAX_FIELDS})</span>
               {selectedFields.includes('student_image') && (
-                <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--dash-orange)' }}>⚠ Photos make PDF slower</span>
+                <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--dash-orange)' }}>{t('report.photoWarning')}</span>
               )}
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '5px' }}>
@@ -193,27 +184,20 @@ export default function AllStudentsSection({
             </div>
           </div>
 
-          {/* Action */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button className="pdf-btn" onClick={() => onOpenPreview(reportFilters)} disabled={!canPreview}>
-              {pdfLoading
-                ? <><span className="spinner-sm" /> Loading…</>
-                : '👁 Preview Report'
-              }
+            <button className="pdf-btn" onClick={() => onOpenPreview(reportFiltersObj)} disabled={!canPreview}>
+              {pdfLoading ? <><span className="spinner-sm" /> Loading…</> : t('report.preview')}
             </button>
-            {!hasFilter && (
-              <span style={{ fontSize: '12px', color: 'var(--dash-red)' }}>⚠ Select at least one filter</span>
-            )}
+            {!hasFilter && <span style={{ fontSize: '12px', color: 'var(--dash-red)' }}>{t('report.filterRequired')}</span>}
           </div>
         </div>
       )}
 
-      {/* ── Student table ── */}
       <div className="dash-card">
         {loading ? (
           <LoadingSpinner message="Loading students…" />
         ) : students.length === 0 ? (
-          <p className="dash-empty">No students match your search.</p>
+          <p className="dash-empty">{t('all.noMatch')}</p>
         ) : (
           <>
             <StudentTable students={students} onRowClick={onStudentClick} />

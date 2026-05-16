@@ -1,5 +1,5 @@
 {
-  "name": "my-electron-app",
+  "name": "darul-uloom-lms",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,8 @@
     "electron": "electron .",
     "start": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "build": "vite build",
-    "dist": "vite build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64"
+    "dist": "vite build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "publish": "vite build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --publish always"
   },
   "build": {
     "appId": "com.madarsa.lms",
@@ -28,7 +29,7 @@
       "icon": "build/icon.ico",
       "target": [
         {
-          "target": "portable",
+          "target": "nsis",
           "arch": [
             "x64"
           ]
@@ -40,9 +41,17 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "دارالعلوم اسلامیہ"
+      "shortcutName": "دارالعلوم اسلامیہ",
+      "differentialPackage": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "shehryar-04",
+      "repo": "Madarsa_LMS_frontend",
+      "releaseType": "release"
     }
   },
   "devDependencies": {
@@ -57,6 +66,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",
+    "electron-updater": "^6.3.9",
     "html2pdf.js": "^0.14.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",

@@ -36,8 +36,27 @@ export function useRooms() {
       .select('*')
       .order('room_number', { ascending: true })
 
-    if (fetchErr) setError(fetchErr.message)
-    else setRooms(data || [])
+    if (fetchErr) { setError(fetchErr.message); setLoading(false); return }
+
+    // Compute real occupancy from students table
+    const { data: studentRows } = await supabase
+      .from('students')
+      .select('room_number')
+      .eq('status', 'current')
+      .not('room_number', 'is', null)
+
+    const countByRoom = {}
+    for (const s of (studentRows || [])) {
+      const rn = (s.room_number || '').trim()
+      if (rn) countByRoom[rn] = (countByRoom[rn] || 0) + 1
+    }
+
+    const enriched = (data || []).map(r => ({
+      ...r,
+      current_occupancy: countByRoom[r.room_number] || 0,
+    }))
+
+    setRooms(enriched)
     setLoading(false)
   }, [])
 

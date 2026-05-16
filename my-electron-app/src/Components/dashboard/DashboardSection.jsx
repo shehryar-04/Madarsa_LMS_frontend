@@ -1,6 +1,8 @@
 import React from 'react'
 import { supabase } from '../../Auth/SupabaseClient'
 import LoadingSpinner from '../shared/LoadingSpinner'
+import { useLabels } from '../../hooks/useUiLabels'
+import UpdateManager from '../shared/UpdateManager'
 
 function StatCard({ icon, label, value, colorClass }) {
   return (
@@ -44,10 +46,10 @@ function RecentStudentRow({ student, onClick }) {
 }
 
 export default function DashboardSection({ stats, recentStudents, loading, onRefresh, onStudentClick, onClassClick }) {
+  const { t } = useLabels()
   const classCount = Object.keys(stats.byClass).length
   const avgPerClass = classCount > 0 ? Math.round(stats.total / classCount) : 0
 
-  // Show all distinct classes sorted by student count descending
   const knownClasses = Object.entries(stats.byClass)
     .filter(([classLevel]) => classLevel && classLevel !== 'Unknown')
     .sort((a, b) => b[1] - a[1])
@@ -56,11 +58,11 @@ export default function DashboardSection({ stats, recentStudents, loading, onRef
     <div className="dash-content">
       <div className="dash-header">
         <div>
-          <h2 className="dash-page-title">Dashboard Overview</h2>
-          <p className="dash-page-subtitle">Real-time student analytics at a glance</p>
+          <h2 className="dash-page-title">{t('dash.title')}</h2>
+          <p className="dash-page-subtitle">{t('dash.subtitle')}</p>
         </div>
         <button className="dash-refresh-btn" onClick={onRefresh}>
-          <span className="refresh-icon">🔄</span> Refresh
+          <span className="refresh-icon">🔄</span> {t('dash.refresh')}
         </button>
       </div>
 
@@ -69,18 +71,18 @@ export default function DashboardSection({ stats, recentStudents, loading, onRef
       ) : (
         <>
           <div className="dash-stats-grid">
-            <StatCard icon="👥" label="Total Students" value={stats.total.toLocaleString()} colorClass="stat-total" />
-            <StatCard icon="🗺️" label="Districts" value={stats.districts} colorClass="stat-districts" />
-            <StatCard icon="🎓" label="Classes" value={classCount} colorClass="stat-classes" />
-            <StatCard icon="📈" label="Avg per Class" value={avgPerClass} colorClass="stat-avg" />
+            <StatCard icon="👥" label={t('dash.totalStudents')} value={stats.total.toLocaleString()} colorClass="stat-total" />
+            <StatCard icon="🗺️" label={t('dash.districts')} value={stats.districts} colorClass="stat-districts" />
+            <StatCard icon="🎓" label={t('dash.classes')} value={classCount} colorClass="stat-classes" />
+            <StatCard icon="📈" label={t('dash.avgPerClass')} value={avgPerClass} colorClass="stat-avg" />
           </div>
 
           <div className="dash-card">
-            <h3 className="dash-card-title">Students by Class</h3>
+            <h3 className="dash-card-title">{t('dash.studentsByClass')}</h3>
             {classCount === 0 ? (
-              <p className="dash-empty">No class data yet</p>
+              <p className="dash-empty">{t('dash.noClassData')}</p>
             ) : knownClasses.length === 0 ? (
-              <p className="dash-empty">No classes found</p>
+              <p className="dash-empty">{t('dash.noClassesFound')}</p>
             ) : (
               <div className="class-chips">
                 {knownClasses.map(([classLevel, count]) => (
@@ -89,7 +91,6 @@ export default function DashboardSection({ stats, recentStudents, loading, onRef
                       key={classLevel}
                       onClick={() => onClassClick?.(classLevel)}
                       style={{ cursor: 'pointer' }}
-                      title={`View all students in ${classLevel}`}
                     >
                       <span className="class-chip-name">{classLevel}</span>
                       <span className="class-chip-count">{count}</span>
@@ -100,15 +101,18 @@ export default function DashboardSection({ stats, recentStudents, loading, onRef
           </div>
 
           <div className="dash-card">
-            <h3 className="dash-card-title">Recent Students</h3>
+            <h3 className="dash-card-title">{t('dash.recentStudents')}</h3>
             {recentStudents.length === 0 ? (
-              <p className="dash-empty">No students found.</p>
+              <p className="dash-empty">{t('dash.noStudents')}</p>
             ) : (
               <div className="dash-table-wrap">
                 <table className="dash-table">
                   <thead>
                     <tr>
-                      <th>Name</th><th>Father Name</th><th>District</th><th>CNIC</th>
+                      <th>{t('table.name')}</th>
+                      <th>{t('table.fatherName')}</th>
+                      <th>{t('table.district')}</th>
+                      <th>{t('table.cnic')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -120,6 +124,9 @@ export default function DashboardSection({ stats, recentStudents, loading, onRef
               </div>
             )}
           </div>
+
+          {/* Auto-Update Panel */}
+          <UpdateManager />
         </>
       )}
     </div>

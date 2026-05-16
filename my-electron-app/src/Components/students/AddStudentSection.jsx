@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react'
 import StudentFormFields from './StudentFormFields'
 import { printStudentForm } from './StudentFormPrint'
 import { useRooms } from '../../hooks/useRooms'
+import { useLabels } from '../../hooks/useUiLabels'
 
 export default function AddStudentSection({ form, onChange, onFileChange, onSubmit, isOnline = true }) {
   const [printing, setPrinting] = useState(false)
   const { rooms, fetchRooms } = useRooms()
+  const { t } = useLabels()
 
   useEffect(() => { fetchRooms() }, [fetchRooms])
 
   const canPrint = Boolean(form.name && form.cnic && form.district)
 
-  // Print without saving — just generates the PDF from current form state
   const handlePrint = async (e) => {
     e.preventDefault()
     setPrinting(true)
@@ -23,16 +24,14 @@ export default function AddStudentSection({ form, onChange, onFileChange, onSubm
       <div className="dash-content">
         <div className="dash-header">
           <div>
-            <h2 className="dash-page-title">Add New Student</h2>
-            <p className="dash-page-subtitle">Fill in the details below to register a student</p>
+            <h2 className="dash-page-title">{t('add.title')}</h2>
+            <p className="dash-page-subtitle">{t('add.subtitle')}</p>
           </div>
         </div>
         <div className="dash-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔴</div>
-          <h3 style={{ color: 'var(--dash-text-bright)', margin: '0 0 8px' }}>You are offline</h3>
-          <p style={{ color: 'var(--dash-text)', fontSize: '14px', margin: 0 }}>
-            Adding students requires an internet connection. Please reconnect and try again.
-          </p>
+          <h3 style={{ color: 'var(--dash-text-bright)', margin: '0 0 8px' }}>{t('add.offline')}</h3>
+          <p style={{ color: 'var(--dash-text)', fontSize: '14px', margin: 0 }}>{t('add.offlineMsg')}</p>
         </div>
       </div>
     )
@@ -42,42 +41,19 @@ export default function AddStudentSection({ form, onChange, onFileChange, onSubm
     <div className="dash-content">
       <div className="dash-header">
         <div>
-          <h2 className="dash-page-title">Add New Student</h2>
-          <p className="dash-page-subtitle">Fill in the details below to register a student</p>
+          <h2 className="dash-page-title">{t('add.title')}</h2>
+          <p className="dash-page-subtitle">{t('add.subtitle')}</p>
         </div>
       </div>
-
       <div className="dash-card">
         <form onSubmit={onSubmit}>
-          <StudentFormFields
-            formState={form}
-            onChange={onChange}
-            onFileChange={onFileChange}
-            rooms={rooms}
-          />
+          <StudentFormFields formState={form} onChange={onChange} onFileChange={onFileChange} rooms={rooms} />
           <div style={{ marginTop: '24px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* Save — submits the form to the DB */}
-            <button type="submit" className="dash-submit-btn">➕ Save Student</button>
-
-            {/* Print — generates PDF from current form state, does NOT save */}
-            <button
-              type="button"
-              className="pdf-btn"
-              onClick={handlePrint}
-              disabled={!canPrint || printing}
-              title={canPrint ? 'Print admission form without saving' : 'Fill Name, CNIC and District first'}
-            >
-              {printing
-                ? <><span className="spinner-sm" /> Generating…</>
-                : '🖨️ Print Form'
-              }
+            <button type="submit" className="dash-submit-btn">{t('add.save')}</button>
+            <button type="button" className="pdf-btn" onClick={handlePrint} disabled={!canPrint || printing}>
+              {printing ? <><span className="spinner-sm" /> Generating…</> : t('add.print')}
             </button>
-
-            {!canPrint && (
-              <span style={{ fontSize: '12px', color: 'var(--dash-text)' }}>
-                Fill Name, CNIC & District to enable printing
-              </span>
-            )}
+            {!canPrint && <span style={{ fontSize: '12px', color: 'var(--dash-text)' }}>{t('add.printHint')}</span>}
           </div>
         </form>
       </div>

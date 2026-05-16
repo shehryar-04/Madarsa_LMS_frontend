@@ -6,6 +6,7 @@ const {
   upsertRooms, getAllRooms,
   getLastSyncTime, setLastSyncTime, getBackupPath,
 } = require('./db.cjs')
+const { initUpdater } = require('./updater.cjs')
 
 const isDev = !app.isPackaged
 
@@ -29,6 +30,11 @@ function createWindow() {
     // Production — load built index.html from the app's resources
     win.loadFile(path.join(__dirname, '../dist/index.html'))
   }
+
+  // Initialize auto-updater after window is ready
+  win.webContents.on('did-finish-load', () => {
+    initUpdater(win)
+  })
 }
 
 app.whenReady().then(createWindow)

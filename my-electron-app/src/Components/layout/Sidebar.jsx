@@ -1,21 +1,33 @@
 import React from 'react'
 import madarsaLogo from '../../assets/مونوجامعہ دارالعلوم الاسلامیہ.png'
+import { useLabels } from '../../hooks/useUiLabels'
 
-const BASE_NAV = [
-  { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-  { id: 'allStudents', label: 'All Students', icon: '👥' },
-  { id: 'addStudent', label: 'Add Student', icon: '➕' },
-  { id: 'sanadRecords', label: 'Sanad Records', icon: '📜' },
-  { id: 'rooms', label: 'Rooms', icon: '🚪' },
-  { id: 'classes', label: 'Classes', icon: '🎓' },
-]
+export default function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, isSuperAdmin = false, isResultsAdmin = false }) {
+  const { t } = useLabels()
 
-const SUPER_ADMIN_NAV = [
-  { id: 'auditLog', label: 'Audit Log', icon: '🔍' },
-]
+  const BASE_NAV = [
+    { id: 'dashboard', label: t('nav.dashboard'), icon: '📊' },
+    { id: 'allStudents', label: t('nav.allStudents'), icon: '👥' },
+    { id: 'addStudent', label: t('nav.addStudent'), icon: '➕' },
+    { id: 'sanadRecords', label: t('nav.sanadRecords'), icon: '📜' },
+    { id: 'rooms', label: t('nav.rooms'), icon: '🚪' },
+    { id: 'classes', label: t('nav.classes'), icon: '🎓' },
+  ]
 
-export default function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, isSuperAdmin = false }) {
-  const navItems = isSuperAdmin ? [...BASE_NAV, ...SUPER_ADMIN_NAV] : BASE_NAV
+  const RESULTS_NAV = [
+    { id: 'results', label: t('nav.results'), icon: '📝' },
+    { id: 'grading', label: t('nav.grading'), icon: '📊' },
+  ]
+
+  const SUPER_ADMIN_NAV = [
+    { id: 'auditLog', label: t('nav.auditLog'), icon: '🔍' },
+  ]
+
+  const navItems = [
+    ...BASE_NAV,
+    ...(isResultsAdmin ? RESULTS_NAV : []),
+    ...(isSuperAdmin ? SUPER_ADMIN_NAV : []),
+  ]
 
   return (
     <aside className="dash-sidebar">
@@ -42,10 +54,10 @@ export default function Sidebar({ activeSection, onNavigate, collapsed, onToggle
         <button
           className="sidebar-btn sidebar-toggle-btn"
           onClick={onToggleCollapse}
-          title={collapsed ? 'Expand' : 'Collapse'}
+          title={collapsed ? t('nav.expand') : t('nav.collapse')}
         >
           <span className="sidebar-btn-icon">{collapsed ? '▶' : '◀'}</span>
-          {!collapsed && <span className="sidebar-btn-label">Collapse</span>}
+          {!collapsed && <span className="sidebar-btn-label">{t('nav.collapse')}</span>}
         </button>
       </div>
     </aside>

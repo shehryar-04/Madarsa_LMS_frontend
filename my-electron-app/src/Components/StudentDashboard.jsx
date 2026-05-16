@@ -14,6 +14,8 @@ import SanadDashboard from './sanad/SanadDashboard'
 import RoomsDashboard from './rooms/RoomsDashboard'
 import AuditDashboard from './audit/AuditDashboard'
 import ClassesDashboard from './classes/ClassesDashboard'
+import ResultsDashboard from './results/ResultsDashboard'
+import GradingDashboard from './results/GradingDashboard'
 
 import { useStudentData } from '../hooks/useStudentData'
 import { useStudentForm, useStudentEdit } from '../hooks/useStudentForm'
@@ -33,6 +35,7 @@ export default function StudentDashboard({ user, onLogout }) {
   const [dbRole, setDbRole] = useState(null)
   const isSuperAdmin = dbRole === 'super_admin'
   const isAdmin = isSuperAdmin || dbRole === 'admin' || user?.user_metadata?.role === 'admin' || user?.role === 'admin'
+  const isResultsAdmin = isSuperAdmin || dbRole === 'results_admin'
 
   // ── Search & filter state ──
   const [searchQuery, setSearchQuery] = useState('')
@@ -187,6 +190,7 @@ export default function StudentDashboard({ user, onLogout }) {
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(c => !c)}
         isSuperAdmin={isSuperAdmin}
+        isResultsAdmin={isResultsAdmin}
       />
 
       <div className="dash-main-area">
@@ -266,6 +270,8 @@ export default function StudentDashboard({ user, onLogout }) {
             />
           )}
           {activeSection === 'auditLog' && isSuperAdmin && <AuditDashboard />}
+          {activeSection === 'results' && <ResultsDashboard isAdmin={isResultsAdmin} />}
+          {activeSection === 'grading' && <GradingDashboard isAdmin={isResultsAdmin} />}
         </main>
       </div>
 

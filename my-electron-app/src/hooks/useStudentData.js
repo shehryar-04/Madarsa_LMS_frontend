@@ -100,7 +100,7 @@ export function useStudentData() {
     const { appliedSearch, filterType, filterDistrict, filterYear, filterClass, filterRoom, showInactive } = filters
     let query = supabase.from('students').select(selectStr, opts)
 
-    if (!showInactive) query = query.eq('status', 'active')
+    if (!showInactive) query = query.eq('status', 'current')
 
     if (appliedSearch?.trim()) {
       const term = appliedSearch.trim()
@@ -129,7 +129,7 @@ export function useStudentData() {
           ? await window.localDb.searchStudents(appliedSearch.trim())
           : await window.localDb.filterStudents({ filterType, filterDistrict, filterYear, filterRoom })
 
-        if (!showInactive) rows = rows.filter(r => r.status !== 'inactive')
+        if (!showInactive) rows = rows.filter(r => r.status === 'current')
         if (filterClass) rows = rows.filter(r => r.class_level === filterClass)
 
         const total = rows.length

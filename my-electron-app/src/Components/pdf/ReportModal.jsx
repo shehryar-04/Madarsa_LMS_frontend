@@ -66,7 +66,7 @@ export default function ReportModal({
   const [filterDistrict, setFilterDistrict] = useState('')
   const [filterYear, setFilterYear] = useState('')
   const [filterRoom, setFilterRoom] = useState('')
-  const [filterStatus, setFilterStatus] = useState('active')
+  const [filterStatus, setFilterStatus] = useState('current')
 
   const hasFilter = filterType || filterDistrict || filterYear || filterRoom || filterStatus
   const canGenerate = hasFilter && selectedFields.length > 0 && !loading

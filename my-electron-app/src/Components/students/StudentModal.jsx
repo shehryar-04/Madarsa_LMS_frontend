@@ -49,7 +49,7 @@ function StudentAvatar({ student }) {
 }
 
 export default function StudentModal({ student, isAdmin, onClose, onEdit }) {
-  const inactive = student.status === 'inactive'
+  const inactive = student.status !== 'current'
 
   return (
     <div className="modal-overlay" onClick={onClose}>

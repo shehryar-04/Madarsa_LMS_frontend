@@ -1,12 +1,16 @@
 import React, { useState, useContext } from 'react'
 import { AuthContext } from './AuthContext'
 import { supabase } from './SupabaseClient'
+import { useLabels } from '../hooks/useUiLabels'
+import { useReportConfig } from '../hooks/useReportConfig'
 import StudentDashboard from '../Components/StudentDashboard'
 import madarsaLogo from '../assets/مونوجامعہ دارالعلوم الاسلامیہ.png'
 import './Auth.css'
 
 export default function AuthForm() {
   const { login, signup, logout, user } = useContext(AuthContext)
+  const { refreshLabels } = useLabels()
+  const { refreshConfigs } = useReportConfig()
   const [activeTab, setActiveTab] = useState('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,6 +27,8 @@ export default function AuthForm() {
     if (!email || !password) { setError('Please fill in all fields'); return }
     try {
       await login(email, password)
+      refreshLabels()
+      refreshConfigs()
     } catch (err) {
       setError(err.message)
     }
